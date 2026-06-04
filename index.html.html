@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard เรื่องร้องเรียน/อุทธรณ์ ศูนย์อนามัยที่ 8</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --accent: #e8a020;
+    --accent2: #2e7d9e;
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --text: #1a2a3a;
+    --muted: #6b7f92;
+    --success: #2e8b57;
+    --warning: #d4780a;
+    --danger: #c0392b;
+    --border: #d0dce8;
+    --shadow: 0 4px 24px rgba(26,58,92,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, var(--primary) 60%, var(--accent2) 100%);
+    color: white;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    background: rgba(232,160,32,0.18);
+    border-radius: 50%;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 30%;
+    width: 140px; height: 140px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50%;
+  }
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 32px 28px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .header-icon {
+    width: 56px; height: 56px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+  .header-title h1 {
+    font-family: 'Prompt', sans-serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.3;
+  }
+  .header-title p {
+    font-size: 0.88rem;
+    opacity: 0.78;
+    margin-top: 4px;
+  }
+  .header-badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: var(--primary);
+    font-family: 'Prompt', sans-serif;
+    font-weight: 700;
+    font-size: 0.78rem;
+    padding: 6px 16px;
+    border-radius: 20px;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+
+  /* LAST UPDATED BAR */
+  .update-bar {
+    background: #e6eff8;
+    border-bottom: 1px solid var(--border);
+    padding: 7px 32px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .update-bar .dot {
+    width: 8px; height: 8px;
+    background: #2e8b57;
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; } 50% { opacity:0.3; }
+  }
+  .update-bar .sheet-link {
+    margin-left: auto;
+    color: var(--accent2);
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.82rem;
+  }
+  .update-bar .sheet-link:hover { text-decoration: underline; }
+
+  /* MAIN */
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 28px 24px 48px;
+  }
+
+  /* STAT CARDS */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 22px 20px 18px;
+    box-shadow: var(--shadow);
+    border-top: 4px solid var(--accent);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: transform 0.18s;
+  }
+  .stat-card:hover { transform: translateY(-3px); }
+  .stat-card:nth-child(2) { border-top-color: var(--accent2); }
+  .stat-card:nth-child(3) { border-top-color: var(--success); }
+  .stat-card:nth-child(4) { border-top-color: var(--danger); }
+  .stat-label {
+    font-size: 0.80rem;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .stat-value {
+    font-family: 'Prompt', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1;
+  }
+  .stat-sub {
+    font-size: 0.80rem;
+    color: var(--muted);
+  }
+
+  /* CHART GRID */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 22px;
+  }
+  .chart-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 22px 22px 18px;
+    box-shadow: var(--shadow);
+  }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-title {
+    font-family: 'Prompt', sans-serif;
+    font-size: 0.97rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .chart-title span { font-size: 1.1em; }
+  .chart-wrap { position: relative; height: 220px; }
+  .chart-wrap.tall { height: 260px; }
+
+  /* TABLE */
+  .table-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 22px 22px 10px;
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  thead th {
+    background: var(--primary);
+    color: white;
+    font-family: 'Prompt', sans-serif;
+    font-weight: 600;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 0.83rem;
+    letter-spacing: 0.02em;
+  }
+  thead th:first-child { border-radius: 8px 0 0 0; }
+  thead th:last-child { border-radius: 0 8px 0 0; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.12s; }
+  tbody tr:hover { background: #f0f6ff; }
+  tbody td { padding: 9px 12px; color: var(--text); }
+  tbody tr:last-child { border-bottom: none; }
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .badge-revoke { background: #fde8e8; color: #c0392b; }
+  .badge-valid  { background: #e8f4eb; color: #2e8b57; }
+  .badge-close  { background: #e8f0fa; color: #2e7d9e; }
+  .badge-report { background: #fef6e4; color: #d4780a; }
+  .badge-process { background: #f0eaff; color: #7c3aed; }
+  .badge-other  { background: #f0f0f0; color: #555; }
+  .type-tag {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 12px;
+    font-size: 0.77rem;
+    font-weight: 600;
+    background: #e8f0fa;
+    color: var(--accent2);
+  }
+
+  /* FOOTER */
+  .footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.80rem;
+    margin-top: 10px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* LOADING */
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(240,244,248,0.85);
+    z-index: 99;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .loading-overlay.active { display: flex; }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 4px solid var(--border);
+    border-top-color: var(--accent2);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 768px) {
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .chart-grid { grid-template-columns: 1fr; }
+    .chart-card.full { grid-column: 1; }
+    .header-inner { flex-wrap: wrap; }
+    .header-badge { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div style="font-family:'Prompt',sans-serif;color:var(--primary);font-weight:600;">กำลังโหลดข้อมูล...</div>
+</div>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="header-icon">📋</div>
+    <div class="header-title">
+      <h1>ทะเบียนเรื่องร้องเรียน / อุทธรณ์</h1>
+      <p>ศูนย์อนามัยที่ 8 อุดรธานี — รายงานสรุปสำหรับผู้บริหาร</p>
+    </div>
+    <div class="header-badge">LIVE DATA</div>
+  </div>
+</div>
+
+<div class="update-bar">
+  <span class="dot"></span>
+  <span id="lastUpdate">กำลังโหลดข้อมูล...</span>
+  <a class="sheet-link" id="sheetLink" href="#" target="_blank">📊 เปิด Google Sheets</a>
+</div>
+
+<div class="main">
+
+  <!-- STAT CARDS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">เรื่องทั้งหมด</div>
+      <div class="stat-value" id="totalCount">—</div>
+      <div class="stat-sub">ตั้งแต่ปี 2566 ถึงปัจจุบัน</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">เพิกถอนคำสั่ง</div>
+      <div class="stat-value" id="revokeCount">—</div>
+      <div class="stat-sub">ผลการพิจารณา</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">คำสั่งชอบ / ยุติเรื่อง</div>
+      <div class="stat-value" id="validCount">—</div>
+      <div class="stat-sub">ผลการพิจารณา</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">จังหวัดที่พบมากสุด</div>
+      <div class="stat-value" id="topProvince" style="font-size:1.25rem;">—</div>
+      <div class="stat-sub" id="topProvinceCount"></div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 1 -->
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title"><span>📅</span>จำนวนเรื่องแยกรายปี</div>
+      <div class="chart-wrap">
+        <canvas id="yearChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span>🗺️</span>จังหวัดที่พบมากที่สุด</div>
+      <div class="chart-wrap">
+        <canvas id="provinceChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 2 -->
+  <div class="chart-grid" style="margin-bottom:22px;">
+    <div class="chart-card">
+      <div class="chart-title"><span>🏷️</span>ประเภทเรื่องร้องเรียน</div>
+      <div class="chart-wrap tall">
+        <canvas id="typeChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title"><span>⚖️</span>ผลการพิจารณา</div>
+      <div class="chart-wrap tall">
+        <canvas id="resultChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-card">
+    <div class="chart-title" style="margin-bottom:14px;"><span>📝</span>รายการทั้งหมด</div>
+    <table id="mainTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>รายการ</th>
+          <th>ประเภท</th>
+          <th>จังหวัด</th>
+          <th>วันที่รับ</th>
+          <th>ผลการพิจารณา</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">กำลังโหลด...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    ข้อมูลดึงจาก Google Sheets แบบ real-time &nbsp;|&nbsp; ศูนย์อนามัยที่ 8 อุดรธานี
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG — เปลี่ยน SHEET_ID และ SHEET_NAME ให้ตรงกับของคุณ
+// ============================================================
+const SHEET_ID   = '1LCrVXKduDUoCr2CxXv7sbG4H2co5PiOxJC3P9GlQHQk';
+const SHEET_NAME = 'ทะเบียน';   // ชื่อ sheet ที่มีข้อมูลหลัก (sheet ที่ 3)
+const API_KEY    = 'AIzaSyAfRkShaFxoyKo7EnLSmY3pdgfQJ15K-Dg';           // ← ใส่ Google Sheets API Key ของคุณที่นี่
+
+// ============================================================
+// STATIC DATA (fallback เมื่อยังไม่ได้ตั้งค่า API Key)
+// ============================================================
+const STATIC_DATA = [
+  {no:1,  type:'เสียง',        title:'อุทธรณ์คำสั่งห้ามเลี้ยงนกนางแอ่น อาคารพาณิชย์',        province:'หนองคาย',    dateReceived:'6 ธ.ค. 65',  result:'เพิกถอนคำสั่ง', year:2566},
+  {no:2,  type:'เสียงและกลิ่น',title:'อุทธรณ์คำสั่งให้ระงับเหตุรำคาญ อู่ปะผุ เคาะ พ่นสี',   province:'นครพนม',     dateReceived:'31 ม.ค. 66', result:'คำสั่งชอบ',     year:2566},
+  {no:3,  type:'กลิ่น',        title:'ร้องเรียนโรงฆ่าสัตว์เทศบาลเมืองเลย',                   province:'เลย',        dateReceived:'30 พ.ค. 66', result:'ออกรายงาน',     year:2566},
+  {no:4,  type:'เสียง',        title:'อุทธรณ์คำสั่งระงับเหตุรำคาญ ร้านบารอน',                province:'อุดรธานี',   dateReceived:'22/5/23',    result:'เพิกถอนคำสั่ง', year:2566},
+  {no:5,  type:'ข้อกฎหมาย',   title:'ร้องเรียนผู้บริหารท้องถิ่นใช้อำนาจไม่เป็นธรรม',        province:'สกลนคร',     dateReceived:'26 มิ.ย. 66',result:'ออกรายงาน',     year:2566},
+  {no:6,  type:'ข้อกฎหมาย',   title:'อุทธรณ์คำสั่งไม่อนุญาตตลาดประเภทที่ 2',                province:'อุดรธานี',   dateReceived:'27 มิ.ย. 66',result:'เพิกถอนคำสั่ง', year:2566},
+  {no:7,  type:'กลิ่นและควัน', title:'อุทธรณ์คำสั่งระงับเหตุรำคาญ ร้าน 04ธันวาหมูกระทะ',   province:'อุดรธานี',   dateReceived:'13 ก.ค. 66', result:'เพิกถอนคำสั่ง', year:2566},
+  {no:8,  type:'เสียง',        title:'อุทธรณ์คำสั่งห้ามดนตรีสด ร้านตะวันนา',                 province:'นครพนม',     dateReceived:'18 ส.ค. 66', result:'เพิกถอนคำสั่ง', year:2566},
+  {no:9,  type:'',             title:'อุทธรณ์คำสั่งห้ามประกอบกิจการ ลานรับซื้อยางพารา',      province:'หนองบัวลำภู',dateReceived:'7 ส.ค. 66',  result:'คำสั่งชอบ',     year:2566},
+  {no:10, type:'',             title:'คำสั่งไม่อนุญาตสถานที่จำหน่ายอาหาร ร้าน 04ธันวา',     province:'อุดรธานี',   dateReceived:'2/10/23',    result:'เพิกถอนคำสั่ง', year:2567},
+  {no:11, type:'',             title:'คำสั่งห้ามใช้สถานที่ส่วนบุคคล นกนางแอ่น',              province:'หนองคาย',    dateReceived:'9 ต.ค. 66',  result:'เพิกถอนคำสั่ง', year:2567},
+  {no:12, type:'',             title:'อุทธรณ์คำสั่งไม่อนุญาตฟาร์มสุกร อบต.เชียงคาน',        province:'เลย',        dateReceived:'1/12/23',    result:'เพิกถอนคำสั่ง', year:2567},
+  {no:13, type:'',             title:'อุทธรณ์คำสั่งไม่อนุญาต โรงงานดอยยางพารา',              province:'สกลนคร',     dateReceived:'22/2/24',    result:'เพิกถอนคำสั่ง', year:2567},
+  {no:14, type:'ข้อกฎหมาย',   title:'อุทธรณ์คำสั่งไม่อนุญาต สร้างสรรค์รีไซเคิล',           province:'สกลนคร',     dateReceived:'13/3/24',    result:'คำสั่งชอบ',     year:2567},
+  {no:15, type:'เสียง',        title:'ร้องเรียนเสียงดังจากหมอลำเสียงอีสาน',                   province:'อุดรธานี',   dateReceived:'23/4/24',    result:'',              year:2567},
+  {no:16, type:'ข้อกฎหมาย',   title:'อุทธรณ์คำสั่งไม่อนุญาต อาทิตย์รีไซเคิล',              province:'สกลนคร',     dateReceived:'2/5/24',     result:'คำสั่งชอบ',     year:2567},
+  {no:17, type:'กลิ่น',        title:'อุทธรณ์คำสั่งไม่อนุญาตเลี้ยงหนอนแมลงวันลาย',          province:'หนองคาย',    dateReceived:'10/7/24',    result:'ยุติเรื่อง',    year:2567},
+  {no:18, type:'กลิ่น',        title:'อุทธรณ์คำสั่งให้หยุดดำเนินกิจการเลี้ยงสุกร',           province:'นครพนม',     dateReceived:'16/8/24',    result:'เพิกถอนคำสั่ง', year:2567},
+  {no:19, type:'เสียงและกลิ่น',title:'อุทธรณ์คำสั่งไม่อนุญาต ปะผุ เคาะ พ่นสี',              province:'นครพนม',     dateReceived:'20/9/24',    result:'ยุติเรื่อง',    year:2567},
+  {no:20, type:'เสียง',        title:'ร้องเรียนวงดนตรีหมอลำ เทศบาลตำบลหนองบัว',              province:'อุดรธานี',   dateReceived:'15/10/24',   result:'เหตุไม่ระงับ',  year:2567},
+  {no:21, type:'ข้อกฎหมาย',   title:'อุทธรณ์คำสั่งเพิกถอนใบอนุญาตรับซื้อยางก้อนถ้วย',     province:'หนองคาย',    dateReceived:'28/8/68',    result:'ยุติเรื่อง',    year:2568},
+  {no:22, type:'เสียงและกลิ่น',title:'อุทธรณ์คำสั่งระงับเหตุรำคาญในสถานที่เอกชน',            province:'อุดรธานี',   dateReceived:'29/8/68',    result:'ยุติเรื่อง',    year:2568},
+  {no:23, type:'เสียง',        title:'ร้องเรียนวงหมอลำเสียงอีสาน',                             province:'อุดรธานี',   dateReceived:'1/12/68',    result:'ยุติเรื่อง',    year:2568},
+  {no:24, type:'กลิ่น',        title:'ขอความอนุเคราะห์ สุมิตราฟาร์มไก่ไข่',                  province:'หนองบัวลำภู',dateReceived:'4/3/69',     result:'ยุติเรื่อง',    year:2569},
+  {no:25, type:'กลิ่นและควัน', title:'ขอความอนุเคราะห์ตรวจวัดกลิ่นโรงงานแปรรูปไม้',         province:'อุดรธานี',   dateReceived:'16/4/69',    result:'อยู่ระหว่างปรับปรุง', year:2569},
+  {no:26, type:'เสียง',        title:'อุทธรณ์กิจการลานอาหารบ้านบ่อน้ำ',                       province:'อุดรธานี',   dateReceived:'15/5/69',    result:'ยุติเรื่อง',    year:2569},
+];
+
+// Chart instances
+let charts = {};
+
+function resultBadge(r) {
+  if (!r) return `<span class="badge badge-other">—</span>`;
+  if (r.includes('เพิกถอน'))   return `<span class="badge badge-revoke">${r}</span>`;
+  if (r.includes('ชอบ'))       return `<span class="badge badge-valid">${r}</span>`;
+  if (r.includes('ยุติ'))      return `<span class="badge badge-close">${r}</span>`;
+  if (r.includes('ออกรายงาน')) return `<span class="badge badge-report">${r}</span>`;
+  if (r.includes('ระหว่าง'))   return `<span class="badge badge-process">${r}</span>`;
+  return `<span class="badge badge-other">${r}</span>`;
+}
+
+function renderDashboard(data) {
+  // --- STATS ---
+  document.getElementById('totalCount').textContent = data.length;
+
+  const revoke = data.filter(d => d.result && d.result.includes('เพิกถอน')).length;
+  const valid  = data.filter(d => d.result && (d.result.includes('ชอบ') || d.result.includes('ยุติ'))).length;
+  document.getElementById('revokeCount').textContent = revoke;
+  document.getElementById('validCount').textContent  = valid;
+
+  // Top province
+  const provCount = {};
+  data.forEach(d => { if(d.province) provCount[d.province] = (provCount[d.province]||0)+1; });
+  const topProv = Object.entries(provCount).sort((a,b)=>b[1]-a[1])[0];
+  if (topProv) {
+    document.getElementById('topProvince').textContent      = topProv[0];
+    document.getElementById('topProvinceCount').textContent = `${topProv[1]} เรื่อง`;
+  }
+
+  // --- YEAR CHART ---
+  const yearCount = {};
+  data.forEach(d => { yearCount[d.year] = (yearCount[d.year]||0)+1; });
+  const years = Object.keys(yearCount).sort();
+  renderChart('yearChart', 'bar', years, years.map(y=>yearCount[y]),
+    ['#1a3a5c','#2e7d9e','#e8a020','#2e8b57','#c0392b','#7c3aed'],
+    'จำนวนเรื่อง', false
+  );
+
+  // --- PROVINCE CHART ---
+  const provEntries = Object.entries(provCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  renderChart('provinceChart', 'bar', provEntries.map(e=>e[0]), provEntries.map(e=>e[1]),
+    ['#2e7d9e','#1a3a5c','#e8a020','#2e8b57','#c0392b','#7c3aed'],
+    'จำนวนเรื่อง', false, true
+  );
+
+  // --- TYPE CHART ---
+  const typeCount = {};
+  data.forEach(d => {
+    const t = d.type || 'ไม่ระบุ';
+    typeCount[t] = (typeCount[t]||0)+1;
+  });
+  const typeEntries = Object.entries(typeCount).sort((a,b)=>b[1]-a[1]);
+  renderChart('typeChart', 'doughnut', typeEntries.map(e=>e[0]), typeEntries.map(e=>e[1]),
+    ['#1a3a5c','#2e7d9e','#e8a020','#2e8b57','#c0392b','#7c3aed','#f39c12'],
+    'เรื่อง', true
+  );
+
+  // --- RESULT CHART ---
+  const resCount = {};
+  data.forEach(d => {
+    let r = d.result || 'ไม่ระบุ';
+    if (r.includes('เพิกถอน')) r = 'เพิกถอนคำสั่ง';
+    else if (r.includes('ชอบ')) r = 'คำสั่งชอบ';
+    else if (r.includes('ยุติ')) r = 'ยุติเรื่อง';
+    else if (r.includes('ออกรายงาน')) r = 'ออกรายงาน';
+    else if (r.includes('ระหว่าง')) r = 'อยู่ระหว่างดำเนินการ';
+    else if (r.includes('ไม่ระงับ')) r = 'เหตุไม่ระงับ';
+    resCount[r] = (resCount[r]||0)+1;
+  });
+  const resEntries = Object.entries(resCount).sort((a,b)=>b[1]-a[1]);
+  renderChart('resultChart', 'doughnut', resEntries.map(e=>e[0]), resEntries.map(e=>e[1]),
+    ['#c0392b','#2e8b57','#2e7d9e','#e8a020','#7c3aed','#95a5a6'],
+    'เรื่อง', true
+  );
+
+  // --- TABLE ---
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = data.map(d => `
+    <tr>
+      <td style="color:var(--muted);font-size:0.8rem;">${d.no}</td>
+      <td style="max-width:320px;line-height:1.4;">${d.title}</td>
+      <td>${d.type ? `<span class="type-tag">${d.type}</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${d.province||'—'}</td>
+      <td style="white-space:nowrap;font-size:0.82rem;color:var(--muted);">${d.dateReceived||'—'}</td>
+      <td>${resultBadge(d.result)}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('lastUpdate').textContent =
+    'อัปเดตล่าสุด: ' + new Date().toLocaleString('th-TH');
+}
+
+function renderChart(id, type, labels, values, colors, unit, isPie, horizontal) {
+  if (charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id).getContext('2d');
+  const cfg = {
+    type,
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: isPie ? colors : colors[0],
+        borderColor: isPie ? 'white' : colors[0],
+        borderWidth: isPie ? 2 : 0,
+        borderRadius: isPie ? 0 : 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: horizontal ? 'y' : 'x',
+      plugins: {
+        legend: { display: isPie, position: 'bottom', labels: { font: { family: 'Sarabun', size: 11 }, padding: 10, boxWidth: 12 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.parsed[isPie?'':horizontal?'x':'y'] ?? ctx.raw} ${unit}`
+          },
+          bodyFont: { family: 'Sarabun' },
+          titleFont: { family: 'Sarabun' }
+        }
+      },
+      scales: isPie ? {} : {
+        x: { ticks: { font: { family: 'Sarabun', size: 11 } }, grid: { color: '#e8edf2' } },
+        y: { ticks: { font: { family: 'Sarabun', size: 11 } }, grid: { color: '#e8edf2' }, beginAtZero: true }
+      }
+    }
+  };
+  charts[id] = new Chart(ctx, cfg);
+}
+
+// ============================================================
+// REAL-TIME FETCH (จาก Google Sheets API)
+// ============================================================
+async function fetchFromSheets() {
+  if (!API_KEY) {
+    console.log('ไม่มี API Key — ใช้ข้อมูล Static');
+    return null;
+  }
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!A1:K100?key=${API_KEY}`;
+  try {
+    document.getElementById('loadingOverlay').classList.add('active');
+    const res = await fetch(url);
+    const json = await res.json();
+    if (!json.values) return null;
+    const rows = json.values;
+    const header = rows[0];
+    return rows.slice(1).filter(r => r[0]).map((r, i) => ({
+      no:           r[0] || (i+1),
+      type:         r[1] || '',
+      title:        r[2] || '',
+      province:     r[4] || '',
+      dateReceived: r[5] || '',
+      result:       r[10] || '',
+      year:         r[5] ? guessYear(r[5]) : 2566,
+    }));
+  } catch(e) {
+    console.error('Sheets API error:', e);
+    return null;
+  } finally {
+    document.getElementById('loadingOverlay').classList.remove('active');
+  }
+}
+
+function guessYear(dateStr) {
+  if (!dateStr) return 2566;
+  const m = dateStr.match(/\b(25\d\d|6[5-9]|[0-9]{4})\b/);
+  if (!m) return 2566;
+  let y = parseInt(m[1]);
+  if (y < 100) y += 2500;
+  return y;
+}
+
+async function init() {
+  document.getElementById('sheetLink').href =
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+
+  const liveData = await fetchFromSheets();
+  renderDashboard(liveData || STATIC_DATA);
+
+  // Auto-refresh ทุก 5 นาที
+  if (API_KEY) {
+    setInterval(async () => {
+      const d = await fetchFromSheets();
+      if (d) renderDashboard(d);
+    }, 5 * 60 * 1000);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
